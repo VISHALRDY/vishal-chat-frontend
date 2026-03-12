@@ -26,7 +26,7 @@ function Chat() {
   // Load users
   useEffect(() => {
 
-    axios.get("http://localhost:5071/api/users")
+axios.get("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net/api/users")
       .then(res => setUsers(res.data))
       .catch(err => console.log(err));
 
@@ -45,7 +45,7 @@ function Chat() {
   useEffect(() => {
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`http://localhost:5071/chatHub?userId=${senderId}`)
+.withUrl("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net/chatHub")
       .withAutomaticReconnect()
       .build();
 
