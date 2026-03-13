@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
 import axios from "axios";
 
+const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net";
+
 function Chat() {
 
   const params = new URLSearchParams(window.location.search);
@@ -26,7 +28,7 @@ function Chat() {
   // Load users
   useEffect(() => {
 
-axios.get("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net/api/users")
+    axios.get(`${API}/api/users`)
       .then(res => setUsers(res.data))
       .catch(err => console.log(err));
 
@@ -45,7 +47,7 @@ axios.get("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.n
   useEffect(() => {
 
     const connection = new signalR.HubConnectionBuilder()
-.withUrl("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net/chatHub")
+      .withUrl(`${API}/chatHub?userId=${senderId}`)
       .withAutomaticReconnect()
       .build();
 
@@ -71,13 +73,11 @@ axios.get("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.n
 
       const otherUser = sender === senderId ? receiver : sender;
 
-      // Update last message preview
       setLastMessages(prev => ({
         ...prev,
         [otherUser]: text
       }));
 
-      // Increase unread if chat not open
       if (selectedUser?.id !== otherUser) {
 
         setUnreadCounts(prev => ({
@@ -106,6 +106,14 @@ axios.get("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.n
     });
 
 
+    // Full online list (new user connects)
+    connection.on("OnlineUsers", (users) => {
+
+      setOnlineUsers(users);
+
+    });
+
+
     // Typing indicator
     connection.on("UserTyping", (userId) => {
 
@@ -117,7 +125,11 @@ axios.get("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.n
 
     });
 
-  }, [senderId, selectedUser]);
+    return () => {
+      connection.stop();
+    };
+
+  }, [senderId]);
 
 
 
@@ -126,14 +138,13 @@ axios.get("https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.n
 
     setSelectedUser(user);
 
-    // Reset unread counter
     setUnreadCounts(prev => ({
       ...prev,
       [user.id]: 0
     }));
 
     const res = await axios.get(
-      `http://localhost:5071/api/messages/conversation?user1=${senderId}&user2=${user.id}`
+      `${API}/api/messages/conversation?user1=${senderId}&user2=${user.id}`
     );
 
     setMessages(res.data);
