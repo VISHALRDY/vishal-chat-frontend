@@ -7,8 +7,9 @@ const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites
 function Chat() {
 
   const senderId = Number(localStorage.getItem("userId"));
+  const token = localStorage.getItem("token");
 
-  if (!senderId) {
+  if (!senderId || !token) {
     window.location.href = "/login";
   }
 
@@ -17,7 +18,6 @@ function Chat() {
 
   const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
-
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
 
@@ -28,30 +28,32 @@ function Chat() {
   const [unreadCounts, setUnreadCounts] = useState({});
 
 
-  // Load users
+  // LOAD USERS
   useEffect(() => {
 
-    axios.get(`${API}/api/users`)
-      .then(res => setUsers(res.data))
-      .catch(err => console.log(err));
+    axios.get(`${API}/api/users`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    .then(res => setUsers(res.data))
+    .catch(err => console.log(err));
 
-  }, []);
+  }, [token]);
 
 
-
-  // Auto scroll
+  // AUTO SCROLL
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
 
-
-  // SignalR connection
+  // SIGNALR CONNECTION
   useEffect(() => {
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${API}/chatHub?userId=${senderId}`, {
-        accessTokenFactory: () => localStorage.getItem("token")
+        accessTokenFactory: () => token
       })
       .withAutomaticReconnect()
       .build();
@@ -63,74 +65,50 @@ function Chat() {
       .catch(err => console.log(err));
 
 
-    // Receive message
     connection.on("ReceiveMessage", (sender, receiver, text, sentAt) => {
 
       const otherUser = sender === senderId ? receiver : sender;
 
-      // Show message only if chat open
       if (
         selectedUser &&
         (sender === selectedUser.id || receiver === selectedUser.id)
       ) {
-
         setMessages(prev => [
           ...prev,
-          {
-            senderId: sender,
-            receiverId: receiver,
-            text,
-            sentAt
-          }
+          { senderId: sender, receiverId: receiver, text, sentAt }
         ]);
-
       }
 
-      // Update last message preview
       setLastMessages(prev => ({
         ...prev,
         [otherUser]: text
       }));
 
-
-      // Increase unread if chat closed
       if (selectedUser?.id !== otherUser) {
-
         setUnreadCounts(prev => ({
           ...prev,
           [otherUser]: (prev[otherUser] || 0) + 1
         }));
-
       }
 
     });
 
 
-    // User online
     connection.on("UserOnline", (userId) => {
-
       setOnlineUsers(prev => [...new Set([...prev, userId])]);
-
     });
 
 
-    // User offline
     connection.on("UserOffline", (userId) => {
-
       setOnlineUsers(prev => prev.filter(id => id !== userId));
-
     });
 
 
-    // Full online list
     connection.on("OnlineUsers", (users) => {
-
       setOnlineUsers(users);
-
     });
 
 
-    // Typing indicator
     connection.on("UserTyping", (userId) => {
 
       setTypingUser(userId);
@@ -141,16 +119,14 @@ function Chat() {
 
     });
 
-
     return () => {
       connection.stop();
     };
 
-  }, [senderId, selectedUser]);
+  }, [senderId, token, selectedUser]);
 
 
-
-  // Load conversation
+  // LOAD CONVERSATION
   const loadConversation = async (user) => {
 
     setSelectedUser(user);
@@ -161,7 +137,12 @@ function Chat() {
     }));
 
     const res = await axios.get(
-      `${API}/api/messages/conversation?user1=${senderId}&user2=${user.id}`
+      `${API}/api/messages/conversation?user1=${senderId}&user2=${user.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     );
 
     setMessages(res.data);
@@ -169,8 +150,7 @@ function Chat() {
   };
 
 
-
-  // Send message
+  // SEND MESSAGE
   const sendMessage = async () => {
 
     if (!selectedUser || message.trim() === "") return;
@@ -243,10 +223,7 @@ function Chat() {
 
                 </div>
 
-                <div style={{
-                  fontSize: "12px",
-                  color: "gray"
-                }}>
+                <div style={{ fontSize: "12px", color: "gray" }}>
                   {lastMessages[user.id]}
                 </div>
 
@@ -257,7 +234,6 @@ function Chat() {
           })}
 
       </div>
-
 
 
       {/* CHAT */}
@@ -274,23 +250,18 @@ function Chat() {
             {selectedUser ? `Chat with ${selectedUser.name}` : "Select User"}
           </b>
 
-          <button onClick={logout}>
-            Logout
-          </button>
+          <button onClick={logout}>Logout</button>
 
           {typingUser === selectedUser?.id && (
-
             <div style={{ fontSize: "12px", fontStyle: "italic" }}>
               {selectedUser.name} is typing...
             </div>
-
           )}
 
         </div>
 
 
-
-        {/* Messages */}
+        {/* MESSAGES */}
         <div style={{
           flex: 1,
           padding: "10px",
@@ -347,8 +318,7 @@ function Chat() {
         </div>
 
 
-
-        {/* Input */}
+        {/* INPUT */}
         <div style={{ display: "flex", padding: "10px", borderTop: "1px solid #ccc" }}>
 
           <input
@@ -360,13 +330,11 @@ function Chat() {
               setMessage(e.target.value);
 
               if (selectedUser) {
-
                 connectionRef.current.invoke(
                   "Typing",
                   senderId,
                   selectedUser.id
                 );
-
               }
 
             }}
