@@ -6,8 +6,11 @@ const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites
 
 function Chat() {
 
-  const params = new URLSearchParams(window.location.search);
-  const senderId = Number(params.get("userId"));
+  const senderId = Number(localStorage.getItem("userId"));
+
+  if (!senderId) {
+    window.location.href = "/login";
+  }
 
   const connectionRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -47,7 +50,9 @@ function Chat() {
   useEffect(() => {
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API}/chatHub?userId=${senderId}`)
+      .withUrl(`${API}/chatHub?userId=${senderId}`, {
+        accessTokenFactory: () => localStorage.getItem("token")
+      })
       .withAutomaticReconnect()
       .build();
 
@@ -61,23 +66,34 @@ function Chat() {
     // Receive message
     connection.on("ReceiveMessage", (sender, receiver, text, sentAt) => {
 
-      setMessages(prev => [
-        ...prev,
-        {
-          senderId: sender,
-          receiverId: receiver,
-          text,
-          sentAt
-        }
-      ]);
-
       const otherUser = sender === senderId ? receiver : sender;
 
+      // Show message only if chat open
+      if (
+        selectedUser &&
+        (sender === selectedUser.id || receiver === selectedUser.id)
+      ) {
+
+        setMessages(prev => [
+          ...prev,
+          {
+            senderId: sender,
+            receiverId: receiver,
+            text,
+            sentAt
+          }
+        ]);
+
+      }
+
+      // Update last message preview
       setLastMessages(prev => ({
         ...prev,
         [otherUser]: text
       }));
 
+
+      // Increase unread if chat closed
       if (selectedUser?.id !== otherUser) {
 
         setUnreadCounts(prev => ({
@@ -90,7 +106,7 @@ function Chat() {
     });
 
 
-    // Online user
+    // User online
     connection.on("UserOnline", (userId) => {
 
       setOnlineUsers(prev => [...new Set([...prev, userId])]);
@@ -98,7 +114,7 @@ function Chat() {
     });
 
 
-    // Offline user
+    // User offline
     connection.on("UserOffline", (userId) => {
 
       setOnlineUsers(prev => prev.filter(id => id !== userId));
@@ -106,7 +122,7 @@ function Chat() {
     });
 
 
-    // Full online list (new user connects)
+    // Full online list
     connection.on("OnlineUsers", (users) => {
 
       setOnlineUsers(users);
@@ -125,11 +141,12 @@ function Chat() {
 
     });
 
+
     return () => {
       connection.stop();
     };
 
-  }, [senderId]);
+  }, [senderId, selectedUser]);
 
 
 
@@ -169,6 +186,16 @@ function Chat() {
 
   };
 
+
+  const logout = () => {
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("name");
+
+    window.location.href = "/login";
+
+  };
 
 
   return (
@@ -239,11 +266,17 @@ function Chat() {
         <div style={{
           padding: "10px",
           borderBottom: "1px solid #ccc",
-          background: "#f5f5f5"
+          background: "#f5f5f5",
+          display: "flex",
+          justifyContent: "space-between"
         }}>
           <b>
             {selectedUser ? `Chat with ${selectedUser.name}` : "Select User"}
           </b>
+
+          <button onClick={logout}>
+            Logout
+          </button>
 
           {typingUser === selectedUser?.id && (
 
