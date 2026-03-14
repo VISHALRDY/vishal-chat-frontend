@@ -3,47 +3,46 @@ import axios from "axios";
 
 const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net";
 
-function Login() {
+function Register() {
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const login = async () => {
+  const register = async () => {
 
-    if (!email || !password) {
-      setError("Please enter email and password");
+    if (!name || !email || !password) {
+      setError("All fields are required");
       return;
     }
 
     try {
 
-      setLoading(true);
       setError("");
 
-      const res = await axios.post(`${API}/api/auth/login`, {
+      const res = await axios.post(`${API}/api/auth/register`, {
+        name,
         email,
         password
       });
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("userId", res.data.userId);
-      localStorage.setItem("name", res.data.name);
+      setMessage("Registration successful! Please login.");
 
-      window.location.href = "/chat";
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
 
     } catch (err) {
 
       if (err.response) {
-        setError(err.response.data.message || "Login failed");
+        setError(err.response.data);
       } else {
-        setError("Server not reachable");
+        setError("Server error");
       }
 
-    } finally {
-      setLoading(false);
     }
 
   };
@@ -51,13 +50,27 @@ function Login() {
   return (
     <div style={{ padding: 40 }}>
 
-      <h2>Login</h2>
+      <h2>Register</h2>
 
       {error && (
         <div style={{ color: "red", marginBottom: 10 }}>
           {error}
         </div>
       )}
+
+      {message && (
+        <div style={{ color: "green", marginBottom: 10 }}>
+          {message}
+        </div>
+      )}
+
+      <input
+        placeholder="Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <br /><br />
 
       <input
         placeholder="Email"
@@ -76,21 +89,16 @@ function Login() {
 
       <br /><br />
 
-      <button onClick={login} disabled={loading}>
-        {loading ? "Logging in..." : "Login"}
+      <button onClick={register}>
+        Register
       </button>
 
       <br /><br />
 
-      {/* REGISTER BUTTON */}
-      <div>
-        Don't have an account?
-        <br />
-        <a href="/register">Register Here</a>
-      </div>
+      <a href="/login">Already have an account? Login</a>
 
     </div>
   );
 }
 
-export default Login;
+export default Register;
