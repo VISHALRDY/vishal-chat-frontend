@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API = "https://chatapp-backend-f7fmbvgragbg8g5.centralus-01.azurewebsites.net";
-
-function Login() {
+const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net";function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
