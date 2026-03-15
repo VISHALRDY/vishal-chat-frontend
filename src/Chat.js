@@ -3,6 +3,7 @@ import * as signalR from "@microsoft/signalr";
 import axios from "axios";
 
 const API = "https://chatapp-backend-f7fmbvgragbg8g5.centralus-01.azurewebsites.net";
+
 function Chat() {
 
   const senderId = Number(localStorage.getItem("userId"));
@@ -26,7 +27,6 @@ function Chat() {
   const [lastMessages, setLastMessages] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({});
 
-
   // LOAD USERS
   useEffect(() => {
 
@@ -40,14 +40,13 @@ function Chat() {
 
   }, [token]);
 
-
   // AUTO SCROLL
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
   // SIGNALR CONNECTION
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
 
     const connection = new signalR.HubConnectionBuilder()
@@ -62,7 +61,6 @@ function Chat() {
     connection.start()
       .then(() => console.log("SignalR Connected"))
       .catch(err => console.log(err));
-
 
     connection.on("ReceiveMessage", (sender, receiver, text, sentAt) => {
 
@@ -92,21 +90,17 @@ function Chat() {
 
     });
 
-
     connection.on("UserOnline", (userId) => {
       setOnlineUsers(prev => [...new Set([...prev, userId])]);
     });
-
 
     connection.on("UserOffline", (userId) => {
       setOnlineUsers(prev => prev.filter(id => id !== userId));
     });
 
-
     connection.on("OnlineUsers", (users) => {
       setOnlineUsers(users);
     });
-
 
     connection.on("UserTyping", (userId) => {
 
@@ -122,7 +116,7 @@ function Chat() {
       connection.stop();
     };
 
-}, [senderId, token]);
+  }, [senderId, token]);
 
   // LOAD CONVERSATION
   const loadConversation = async (user) => {
@@ -147,7 +141,6 @@ function Chat() {
 
   };
 
-
   // SEND MESSAGE
   const sendMessage = async () => {
 
@@ -164,7 +157,6 @@ function Chat() {
 
   };
 
-
   const logout = () => {
 
     localStorage.removeItem("token");
@@ -174,7 +166,6 @@ function Chat() {
     window.location.href = "/login";
 
   };
-
 
   return (
 
@@ -233,7 +224,6 @@ function Chat() {
 
       </div>
 
-
       {/* CHAT */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
 
@@ -257,7 +247,6 @@ function Chat() {
           )}
 
         </div>
-
 
         {/* MESSAGES */}
         <div style={{
@@ -315,7 +304,6 @@ function Chat() {
 
         </div>
 
-
         {/* INPUT */}
         <div style={{ display: "flex", padding: "10px", borderTop: "1px solid #ccc" }}>
 
@@ -327,13 +315,13 @@ function Chat() {
 
               setMessage(e.target.value);
 
-              if (connectionRef.current) {
-  connectionRef.current.invoke(
-    "Typing",
-    senderId,
-    selectedUser.id
-  );
-}
+              if (connectionRef.current && selectedUser) {
+                connectionRef.current.invoke(
+                  "Typing",
+                  senderId,
+                  selectedUser.id
+                );
+              }
 
             }}
           />
