@@ -2,8 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
 import axios from "axios";
 
-const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net";
-
+const API = "https://chatapp-backend-f7fmbvgragbg8g5.centralus-01.azurewebsites.net";
 function Chat() {
 
   const senderId = Number(localStorage.getItem("userId"));
@@ -123,8 +122,7 @@ function Chat() {
       connection.stop();
     };
 
-  }, [senderId, token, selectedUser]);
-
+}, [senderId, token]);
 
   // LOAD CONVERSATION
   const loadConversation = async (user) => {
@@ -329,13 +327,13 @@ function Chat() {
 
               setMessage(e.target.value);
 
-              if (selectedUser) {
-                connectionRef.current.invoke(
-                  "Typing",
-                  senderId,
-                  selectedUser.id
-                );
-              }
+              if (connectionRef.current) {
+  connectionRef.current.invoke(
+    "Typing",
+    senderId,
+    selectedUser.id
+  );
+}
 
             }}
           />
