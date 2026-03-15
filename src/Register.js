@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net";
+const API = "https://chatapp-backend-f7fmbvgragbg8g5.centralus-01.azurewebsites.net";
 
 function Register() {
 
@@ -23,7 +23,7 @@ function Register() {
 
       setError("");
 
-      const res = await axios.post(`${API}/api/auth/register`, {
+      await axios.post(`${API}/api/Auth/register`, {
         name,
         email,
         password
@@ -73,6 +73,7 @@ function Register() {
       <br /><br />
 
       <input
+        type="email"
         placeholder="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
