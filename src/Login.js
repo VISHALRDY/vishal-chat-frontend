@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API = "https://chatapp-backend-f7fmbvgragb8g8g5.centralus-01.azurewebsites.net";
+const API = "https://chatapp-backend-f7fmbvgragbg8g5.centralus-01.azurewebsites.net";
 
 function Login() {
 
@@ -23,7 +23,7 @@ function Login() {
       setLoading(true);
       setError("");
 
-      const res = await axios.post(`${API}/api/auth/login`, {
+      const res = await axios.post(`${API}/api/Auth/login`, {
         email,
         password
       });
@@ -82,7 +82,6 @@ function Login() {
 
       <br /><br />
 
-      {/* REGISTER BUTTON */}
       <div>
         Don't have an account?
         <br />
