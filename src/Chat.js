@@ -45,7 +45,6 @@ function Chat() {
   }, [messages]);
 
   // SIGNALR CONNECTION
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
 
     const connection = new signalR.HubConnectionBuilder()
@@ -115,8 +114,7 @@ function Chat() {
       connection.stop();
     };
 
-  }, [senderId, token]);
-
+}, [senderId, token, selectedUser]);
   // LOAD CONVERSATION
   const loadConversation = async (user) => {
 
